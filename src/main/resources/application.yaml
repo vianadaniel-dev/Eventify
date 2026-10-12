@@ -5,19 +5,31 @@ spring:
   application:
     name: Eventify
 
-# Control del seeder de datos iniciales en memoria
+  datasource:
+    url: jdbc:postgresql://localhost:5432/eventify_db
+    username: postgres
+    password: 123456
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update # Crea y actualiza tablas automáticamente
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+    open-in-view: false
+
 app:
   seeder:
     enabled: true
 
-# Configuración de Swagger UI / OpenAPI
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
   api-docs:
     path: /v3/api-docs
 
-# Configuración de Actuator (Observabilidad y Salud)
 management:
   endpoints:
     web:

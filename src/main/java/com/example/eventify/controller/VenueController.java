@@ -5,14 +5,19 @@ import com.example.eventify.service.VenueService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/venues")
-@Tag(name = "Lugares", description = "Endpoints para la gestión de venues y recintos")
+@Tag(name = "Lugares", description = "Operaciones CRUD con Paginación y Ordenamiento para Lugares")
 public class VenueController {
 
     private final VenueService venueService;
@@ -22,18 +27,40 @@ public class VenueController {
     }
 
     @PostMapping
-    @Operation(summary = "Registrar un nuevo lugar", description = "Registra un recinto con su respectiva capacidad")
-    @ApiResponse(responseCode = "201", description = "Lugar creado exitosamente")
-    @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos")
-    public ResponseEntity<Venue> createVenue(@RequestBody Venue venue) {
-        Venue created = venueService.createVenue(venue);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    @Operation(summary = "Crear un nuevo lugar")
+    @ApiResponse(responseCode = "201", description = "Lugar creado")
+    @ApiResponse(responseCode = "400", description = "Datos inválidos")
+    public ResponseEntity<Venue> createVenue(@Valid @RequestBody Venue venue) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(venueService.createVenue(venue));
     }
 
     @GetMapping
-    @Operation(summary = "Listar todos los lugares", description = "Obtiene todos los recintos registrados")
-    @ApiResponse(responseCode = "200", description = "Lista de lugares obtenida")
-    public ResponseEntity<List<Venue>> getAllVenues() {
-        return ResponseEntity.ok(venueService.getAllVenues());
+    @Operation(summary = "Listado paginado de lugares")
+    public ResponseEntity<Page<Venue>> getAllVenues(
+            @ParameterObject @PageableDefault(size = 10, sort = "nombre", direction = Sort.Direction.ASC) Pageable pageable) {
+        return ResponseEntity.ok(venueService.getAllVenues(pageable));
+    }
+
+    @GetMapping("/{id}")
+    @Operation(summary = "Consultar lugar por ID")
+    @ApiResponse(responseCode = "200", description = "Lugar encontrado")
+    @ApiResponse(responseCode = "404", description = "Lugar no encontrado")
+    public ResponseEntity<Venue> getVenueById(@PathVariable Long id) {
+        return ResponseEntity.ok(venueService.getVenueById(id));
+    }
+
+    @PutMapping("/{id}")
+    @Operation(summary = "Actualizar lugar por ID")
+    public ResponseEntity<Venue> updateVenue(@PathVariable Long id, @Valid @RequestBody Venue venue) {
+        return ResponseEntity.ok(venueService.updateVenue(id, venue));
+    }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Eliminar lugar por ID")
+    @ApiResponse(responseCode = "204", description = "Lugar eliminado")
+    @ApiResponse(responseCode = "404", description = "Lugar no encontrado")
+    public ResponseEntity<Void> deleteVenue(@PathVariable Long id) {
+        venueService.deleteVenue(id);
+        return ResponseEntity.noContent().build();
     }
 }

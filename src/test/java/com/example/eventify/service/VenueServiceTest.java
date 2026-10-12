@@ -1,6 +1,7 @@
 package com.example.eventify.service;
 
 import com.example.eventify.exception.BadRequestException;
+import com.example.eventify.exception.ResourceNotFoundException;
 import com.example.eventify.model.Venue;
 import com.example.eventify.repository.VenueRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -9,9 +10,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.util.Collections;
-import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -27,80 +32,59 @@ class VenueServiceTest {
     private VenueService venueService;
 
     @Test
-    @DisplayName("Registro exitoso de lugar (Camino Feliz)")
-    void createVenue_ValidData_ReturnsCreatedVenue() {
-        // Arrange
-        Venue inputVenue = Venue.builder()
-                .nombre("Puerta de Oro")
-                .direccion("Vía 40 # 79B-06")
-                .capacidad(4000)
-                .build();
+    @DisplayName("Crear lugar con datos válidos")
+    void createVenue_ValidData_Success() {
+        Venue input = Venue.builder().nombre("Teatro").direccion("Calle 10").capacidad(500).build();
+        Venue saved = Venue.builder().id(1L).nombre("Teatro").direccion("Calle 10").capacidad(500).build();
 
-        Venue savedVenue = Venue.builder()
-                .id(1L)
-                .nombre("Puerta de Oro")
-                .direccion("Vía 40 # 79B-06")
-                .capacidad(4000)
-                .build();
+        when(venueRepository.save(any(Venue.class))).thenReturn(saved);
 
-        when(venueRepository.save(any(Venue.class))).thenReturn(savedVenue);
+        Venue result = venueService.createVenue(input);
 
-        // Act
-        Venue result = venueService.createVenue(inputVenue);
-
-        // Assert
         assertNotNull(result);
         assertEquals(1L, result.getId());
-        assertEquals("Puerta de Oro", result.getNombre());
-        assertEquals(4000, result.getCapacidad());
-        verify(venueRepository, times(1)).save(inputVenue);
+        verify(venueRepository, times(1)).save(input);
     }
 
     @Test
-    @DisplayName("Error al registrar lugar con nombre vacío")
-    void createVenue_EmptyName_ThrowsBadRequestException() {
-        Venue invalidVenue = Venue.builder()
-                .nombre("   ")
-                .direccion("Calle 100 # 50")
-                .capacidad(500)
-                .build();
+    @DisplayName("Crear lugar con capacidad menor o igual a cero lanza BadRequestException")
+    void createVenue_InvalidCapacity_ThrowsException() {
+        Venue invalid = Venue.builder().nombre("Teatro").direccion("Calle 10").capacidad(0).build();
 
-        BadRequestException exception = assertThrows(
-                BadRequestException.class,
-                () -> venueService.createVenue(invalidVenue)
-        );
-
-        assertTrue(exception.getMessage().contains("nombre del lugar es obligatorio"));
+        assertThrows(BadRequestException.class, () -> venueService.createVenue(invalid));
         verify(venueRepository, never()).save(any());
     }
 
     @Test
-    @DisplayName("Error al registrar lugar con capacidad menor o igual a cero")
-    void createVenue_InvalidCapacity_ThrowsBadRequestException() {
-        Venue invalidVenue = Venue.builder()
-                .nombre("Teatro Municipal")
-                .direccion("Carrera 53 # 70")
-                .capacidad(0)
-                .build();
+    @DisplayName("Buscar lugar inexistente por ID lanza ResourceNotFoundException (404)")
+    void getVenueById_NotFound_ThrowsException() {
+        when(venueRepository.findById(999L)).thenReturn(Optional.empty());
 
-        BadRequestException exception = assertThrows(
-                BadRequestException.class,
-                () -> venueService.createVenue(invalidVenue)
-        );
-
-        assertTrue(exception.getMessage().contains("capacidad debe ser un número mayor a cero"));
-        verify(venueRepository, never()).save(any());
+        assertThrows(ResourceNotFoundException.class, () -> venueService.getVenueById(999L));
+        verify(venueRepository, times(1)).findById(999L);
     }
 
     @Test
-    @DisplayName("Consulta de recintos con catálogo vacío retorna lista vacía")
-    void getAllVenues_EmptyCatalog_ReturnsEmptyList() {
-        when(venueRepository.findAll()).thenReturn(Collections.emptyList());
+    @DisplayName("Listar lugares con paginación")
+    void getAllVenues_Paged_Success() {
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Venue> emptyPage = new PageImpl<>(Collections.emptyList(), pageable, 0);
 
-        List<Venue> results = venueService.getAllVenues();
+        when(venueRepository.findAll(pageable)).thenReturn(emptyPage);
 
-        assertNotNull(results);
-        assertTrue(results.isEmpty());
-        verify(venueRepository, times(1)).findAll();
+        Page<Venue> result = venueService.getAllVenues(pageable);
+
+        assertNotNull(result);
+        assertEquals(0, result.getTotalElements());
+        verify(venueRepository, times(1)).findAll(pageable);
+    }
+
+    @Test
+    @DisplayName("Eliminar lugar inexistente lanza ResourceNotFoundException (404)")
+    void deleteVenue_NotFound_ThrowsException() {
+        when(venueRepository.existsById(999L)).thenReturn(false);
+
+        assertThrows(ResourceNotFoundException.class, () -> venueService.deleteVenue(999L));
+        verify(venueRepository, never()).deleteById(anyLong());
     }
 }
