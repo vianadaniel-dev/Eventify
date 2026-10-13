@@ -1,61 +1,93 @@
 package com.example.eventify.repository;
 
+import com.example.eventify.dto.EventSummaryDTO;
+import com.example.eventify.model.Category;
 import com.example.eventify.model.Event;
+import com.example.eventify.model.Venue;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
 
 import java.time.LocalDate;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@DataJpaTest
+@DataJpaTest(properties = {
+        "spring.flyway.enabled=false",
+        "spring.jpa.hibernate.ddl-auto=create-drop"
+})
 class EventRepositoryTest {
 
     @Autowired
     private EventRepository eventRepository;
 
-    @Test
-    @DisplayName("Debe persistir un evento y recuperarlo por ID")
-    void saveAndFindById_Success() {
-        Event event = Event.builder()
-                .nombre("Concierto de Jazz")
-                .fecha(LocalDate.of(2026, 12, 15))
-                .descripcion("Encuentro musical anual")
-                .build();
+    @Autowired
+    private VenueRepository venueRepository;
 
-        Event saved = eventRepository.save(event);
+    @Autowired
+    private CategoryRepository categoryRepository;
 
-        assertNotNull(saved.getId());
-        Optional<Event> found = eventRepository.findById(saved.getId());
-        assertTrue(found.isPresent());
-        assertEquals("Concierto de Jazz", found.get().getNombre());
+    private Venue savedVenue;
+    private Category savedCategory;
+
+    @BeforeEach
+    void setUp() {
+        savedVenue = venueRepository.save(Venue.builder()
+                .nombre("Movistar Arena")
+                .ciudad("Bogotá")
+                .direccion("Dg. 61c #26-36")
+                .capacidad(14000)
+                .build());
+
+        savedCategory = categoryRepository.save(Category.builder()
+                .nombre("Conciertos")
+                .descripcion("Música en vivo")
+                .build());
     }
 
     @Test
-    @DisplayName("Debe buscar eventos por coincidencia parcial de nombre de forma paginada")
-    void findByNombreContainingIgnoreCase_ReturnsPage() {
-        eventRepository.save(Event.builder().nombre("Festival de Salsa").fecha(LocalDate.now()).build());
-        eventRepository.save(Event.builder().nombre("Festival de Rock").fecha(LocalDate.now()).build());
-        eventRepository.save(Event.builder().nombre("Feria del Libro").fecha(LocalDate.now()).build());
+    @DisplayName("Escenario 6: Búsqueda insensible a mayúsculas y parcial con Record y Slice")
+    void findSummariesByFilters_CaseInsensitiveAndPartial_Success() {
+        eventRepository.save(Event.builder()
+                .nombre("Concierto de ROCK")
+                .fecha(LocalDate.now().plusDays(5))
+                .activo(true)
+                .venue(savedVenue)
+                .categories(Set.of(savedCategory))
+                .build());
 
-        Page<Event> page = eventRepository.findByNombreContainingIgnoreCase("festival", PageRequest.of(0, 10));
+        Slice<EventSummaryDTO> result = eventRepository.findSummariesByFilters(
+                "bog", "concier", PageRequest.of(0, 10)
+        );
 
-        assertEquals(2, page.getTotalElements());
+        assertFalse(result.isEmpty());
+        assertEquals("Concierto de ROCK", result.getContent().get(0).nombreEvento());
+        assertEquals("Bogotá", result.getContent().get(0).ciudad());
     }
 
     @Test
-    @DisplayName("Debe eliminar un evento de la base de datos")
-    void deleteEvent_Success() {
-        Event saved = eventRepository.save(Event.builder().nombre("Evento Temporal").fecha(LocalDate.now()).build());
+    @DisplayName("TASK 1.2: Soft Delete (@SQLRestriction) oculta eventos inactivos automáticamente")
+    void softDelete_HidesInactiveEvent() {
+        Event event = eventRepository.save(Event.builder()
+                .nombre("Evento Temporal")
+                .fecha(LocalDate.now())
+                .activo(true)
+                .venue(savedVenue)
+                .build());
 
-        eventRepository.deleteById(saved.getId());
+        event.deactivate();
+        eventRepository.saveAndFlush(event);
 
-        Optional<Event> deleted = eventRepository.findById(saved.getId());
-        assertTrue(deleted.isEmpty());
+        // Al tener activo = false, @SQLRestriction impide que aparezca en consultas
+        Slice<Event> activeEvents = eventRepository.findCatalogWithRelations(
+                null, null, null, null, null, PageRequest.of(0, 10)
+        );
+        assertTrue(activeEvents.isEmpty());
     }
 }

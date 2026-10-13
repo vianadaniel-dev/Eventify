@@ -14,20 +14,25 @@ import java.time.LocalDate;
 public class DataLoaderConfig {
 
     @Bean
-    @ConditionalOnProperty(name = "app.seeder.enabled", havingValue = "true", matchIfMissing = true)
+    @ConditionalOnProperty(name = "app.seeder.enabled", havingValue = "true")
     public CommandLineRunner initDatabase(EventRepository eventRepository, VenueRepository venueRepository) {
         return args -> {
-            Venue venue1 = venueRepository.save(Venue.builder()
-                    .nombre("Centro de Convenciones Puerta de Oro")
-                    .direccion("Vía 40 # 79B-06, Barranquilla")
-                    .capacidad(3000)
-                    .build());
+            if (venueRepository.count() == 0) {
+                Venue venue = venueRepository.save(Venue.builder()
+                        .nombre("Centro de Convenciones Puerta de Oro")
+                        .ciudad("Barranquilla")
+                        .direccion("Vía 40 # 79B-06")
+                        .capacidad(8000)
+                        .build());
 
-            eventRepository.save(Event.builder()
-                    .nombre("Tech Conference 2026")
-                    .fecha(LocalDate.of(2026, 11, 15))
-                    .descripcion("Encuentro anual de desarrollo e innovación tecnológica")
-                    .build());
+                eventRepository.save(Event.builder()
+                        .nombre("Tech Caribe Expo 2026")
+                        .fecha(LocalDate.now().plusDays(30))
+                        .descripcion("Encuentro de innovación y desarrollo")
+                        .activo(true)
+                        .venue(venue)
+                        .build());
+            }
         };
     }
 }

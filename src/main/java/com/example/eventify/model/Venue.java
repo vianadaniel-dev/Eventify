@@ -4,12 +4,10 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -28,6 +26,10 @@ public class Venue {
     @NotBlank(message = "La dirección del lugar es obligatoria")
     @Column(nullable = false, length = 255)
     private String direccion;
+
+    @NotBlank(message = "La ciudad es obligatoria")
+    @Column(nullable = false, length = 100)
+    private String ciudad;
 
     @NotNull(message = "La capacidad es obligatoria")
     @Min(value = 1, message = "La capacidad debe ser mayor a cero")

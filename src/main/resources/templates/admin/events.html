@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Eventify - Panel Administrativo</title>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; margin: 0; background: #f8fafc; color: #1e293b; }
+        .navbar { background: #0f172a; color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+        .navbar a { color: #cbd5e1; text-decoration: none; margin-left: 1.5rem; font-weight: 500; }
+        .navbar a.active { color: #38bdf8; border-bottom: 2px solid #38bdf8; padding-bottom: 4px; }
+        .container { max-width: 1100px; margin: 2rem auto; padding: 0 1rem; }
+        .card { background: white; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        h2 { margin-top: 0; font-size: 1.25rem; color: #0f172a; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+        .form-group { display: flex; flex-direction: column; margin-bottom: 1rem; }
+        label { font-weight: 600; font-size: 0.85rem; margin-bottom: 0.35rem; color: #475569; }
+        input, select, textarea { padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; }
+        .checkbox-group { display: flex; flex-wrap: wrap; gap: 0.75rem; padding: 0.5rem 0; }
+        .checkbox-item { background: #f1f5f9; padding: 0.35rem 0.75rem; border-radius: 6px; font-size: 0.85rem; display: flex; align-items: center; gap: 0.4rem; }
+        .btn { background: #2563eb; color: white; border: none; padding: 0.6rem 1.25rem; border-radius: 6px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-block; }
+        .btn-danger { background: #dc2626; padding: 0.35rem 0.75rem; font-size: 0.8rem; }
+        .btn-secondary { background: #64748b; }
+        .btn.disabled { background: #cbd5e1; color: #94a3b8; pointer-events: none; }
+        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        th, td { text-align: left; padding: 0.75rem; border-bottom: 1px solid #e2e8f0; font-size: 0.9rem; }
+        th { background: #f1f5f9; color: #475569; text-transform: uppercase; font-size: 0.75rem; }
+        .badge { background: #e0f2fe; color: #0369a1; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; margin-right: 0.25rem; display: inline-block; }
+        .pagination { display: flex; justify-content: space-between; align-items: center; margin-top: 1.25rem; }
+        .empty-alert { background: #e0f2fe; color: #0369a1; padding: 1rem; border-radius: 6px; font-weight: 500; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <strong>Eventify Admin</strong>
+    <div>
+        <a th:href="@{/admin/events}" class="active">Eventos</a>
+        <a th:href="@{/admin/venues}">Lugares</a>
+        <a th:href="@{/swagger-ui.html}" target="_blank">Swagger API</a>
+    </div>
+</nav>
+
+<div class="container">
+
+    <!-- 1. Formulario Relacional de Creación (TASK 4.3) -->
+    <div class="card">
+        <h2>Registrar Nuevo Evento</h2>
+        <form th:action="@{/admin/events}" th:object="${eventForm}" method="post">
+            <div class="grid-3">
+                <div class="form-group">
+                    <label>Nombre del Evento</label>
+                    <input type="text" th:field="*{nombre}" placeholder="Ej. Concierto de ROCK" required />
+                </div>
+                <div class="form-group">
+                    <label>Fecha</label>
+                    <input type="date" th:field="*{fecha}" required />
+                </div>
+                <div class="form-group">
+                    <label>Sede Física (Venue)</label>
+                    <select th:field="*{venueId}" required>
+                        <option value="">-- Seleccione un Lugar --</option>
+                        <option th:each="v : ${venues}"
+                                th:value="${v.id}"
+                                th:text="${v.nombre + ' (' + v.ciudad + ' - Cap: ' + v.capacidad + ')'}">
+                        </option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Categorías Temáticas (Seleccione al menos una)</label>
+                <div class="checkbox-group">
+                    <label class="checkbox-item" th:each="cat : ${categories}">
+                        <input type="checkbox" th:field="*{categoryIds}" th:value="${cat.id}" />
+                        <span th:text="${cat.nombre}">Categoría</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Descripción</label>
+                <textarea th:field="*{descripcion}" rows="2" placeholder="Detalles del evento..."></textarea>
+            </div>
+
+            <button type="submit" class="btn">Guardar Evento</button>
+        </form>
+    </div>
+
+    <!-- 2. Barra de Búsqueda Filtrada (Escenarios 3 y 6) -->
+    <div class="card">
+        <h2>Filtrar Catálogo</h2>
+        <form th:action="@{/admin/events}" method="get" class="grid-3" style="align-items: end;">
+            <div class="form-group" style="margin-bottom:0;">
+                <label>Ciudad (parcial / insensible)</label>
+                <input type="text" name="ciudad" th:value="${ciudad}" placeholder="Ej. bog, medellín..." />
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+                <label>Categoría (parcial / insensible)</label>
+                <input type="text" name="categoria" th:value="${categoria}" placeholder="Ej. rock, conciertos..." />
+            </div>
+            <div style="display:flex; gap: 0.5rem;">
+                <button type="submit" class="btn">Buscar</button>
+                <a th:href="@{/admin/events}" class="btn btn-secondary">Limpiar</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- 3. Tabla de Eventos Optimizada y Paginación con Slice (TASK 4.4) -->
+    <div class="card">
+        <h2>Catálogo de Eventos Activos (Ordenados por Fecha DESC)</h2>
+
+        <div th:if="${#lists.isEmpty(events)}" class="empty-alert">
+            Actualmente no hay eventos programados
+        </div>
+
+        <table th:unless="${#lists.isEmpty(events)}">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Evento</th>
+                <th>Fecha</th>
+                <th>Lugar (Venue)</th>
+                <th>Ciudad</th>
+                <th>Categorías</th>
+                <th>Acción</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="item : ${events}">
+                <td th:text="${item.id}">1</td>
+                <td th:text="${item.nombre}" style="font-weight: 600;">Nombre</td>
+                <td th:text="${item.fecha}">2026-11-20</td>
+                <td th:text="${item.venue.nombre}">Sede</td>
+                <td th:text="${item.venue.ciudad}">Ciudad</td>
+                <td>
+                    <span class="badge" th:each="c : ${item.categories}" th:text="${c.nombre}">Cat</span>
+                </td>
+                <td>
+                    <form th:action="@{/admin/events/{id}/delete(id=${item.id})}" method="post" style="display:inline;">
+                        <button type="submit" class="btn btn-danger">Desactivar</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <!-- Controles Anterior / Siguiente basados en Slice manteniendo filtros en URL -->
+        <div class="pagination" th:if="${eventsSlice != null}">
+            <a class="btn"
+               th:classappend="${!eventsSlice.hasPrevious()} ? 'disabled'"
+               th:href="@{/admin/events(page=${currentPage - 1}, size=${pageSize}, ciudad=${ciudad}, categoria=${categoria})}">
+                &laquo; Anterior
+            </a>
+
+            <span>Página <strong th:text="${currentPage + 1}">1</strong></span>
+
+            <a class="btn"
+               th:classappend="${!eventsSlice.hasNext()} ? 'disabled'"
+               th:href="@{/admin/events(page=${currentPage + 1}, size=${pageSize}, ciudad=${ciudad}, categoria=${categoria})}">
+                Siguiente &raquo;
+            </a>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

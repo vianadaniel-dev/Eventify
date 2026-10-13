@@ -50,12 +50,21 @@ public class VenueService {
         if (updatedVenue.getCapacidad() == null || updatedVenue.getCapacidad() <= 0) {
             throw new BadRequestException("La capacidad debe ser mayor a cero");
         }
+        if (updatedVenue.getCiudad() == null || updatedVenue.getCiudad().trim().isEmpty()) {
+            throw new BadRequestException("La ciudad es obligatoria");
+        }
 
         existing.setNombre(updatedVenue.getNombre());
         existing.setDireccion(updatedVenue.getDireccion());
+        existing.setCiudad(updatedVenue.getCiudad());
         existing.setCapacidad(updatedVenue.getCapacidad());
 
         return venueRepository.save(existing);
+    }
+
+    @Transactional(readOnly = true)
+    public java.util.List<Venue> getAllVenuesList() {
+        return venueRepository.findAll();
     }
 
     @Transactional

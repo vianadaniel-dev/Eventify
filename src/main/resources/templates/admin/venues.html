@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eventify - Panel de Lugares</title>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; margin: 0; background-color: #f8fafc; color: #1e293b; }
+        .navbar { background-color: #0f172a; color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+        .navbar a { color: #cbd5e1; text-decoration: none; margin-left: 1.5rem; font-weight: 500; }
+        .navbar a.active { color: #38bdf8; border-bottom: 2px solid #38bdf8; padding-bottom: 4px; }
+        .container { max-width: 1100px; margin: 2rem auto; padding: 0 1rem; }
+        .card { background: white; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid #e2e8f0; }
+        h2 { margin-top: 0; color: #0f172a; font-size: 1.25rem; }
+        .form-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+        .form-group { display: flex; flex-direction: column; margin-bottom: 1rem; }
+        label { font-weight: 600; font-size: 0.85rem; margin-bottom: 0.35rem; color: #475569; }
+        input { padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; }
+        button { background-color: #2563eb; color: white; border: none; padding: 0.6rem 1.25rem; border-radius: 6px; font-weight: 600; cursor: pointer; }
+        button:hover { background-color: #1d4ed8; }
+        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        th, td { text-align: left; padding: 0.75rem; border-bottom: 1px solid #e2e8f0; font-size: 0.9rem; }
+        th { background-color: #f1f5f9; color: #475569; font-size: 0.75rem; text-transform: uppercase; }
+        .empty-alert { background-color: #e0f2fe; color: #0369a1; padding: 1rem; border-radius: 6px; font-weight: 500; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <strong>Eventify Admin</strong>
+    <div>
+        <a th:href="@{/admin/events}">Eventos</a>
+        <a th:href="@{/admin/venues}" class="active">Lugares</a>
+        <a th:href="@{/swagger-ui.html}" target="_blank">Swagger API</a>
+    </div>
+</nav>
+
+<div class="container">
+    <!-- Formulario de Registro con Ciudad -->
+    <div class="card">
+        <h2>Registrar Nuevo Lugar / Recinto</h2>
+        <form th:action="@{/admin/venues}" th:object="${venue}" method="post">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="nombre">Nombre del Lugar</label>
+                    <input type="text" id="nombre" th:field="*{nombre}" placeholder="Ej. Movistar Arena" required />
+                </div>
+                <div class="form-group">
+                    <label for="ciudad">Ciudad</label>
+                    <input type="text" id="ciudad" th:field="*{ciudad}" placeholder="Ej. Bogotá" required />
+                </div>
+                <div class="form-group">
+                    <label for="direccion">Dirección</label>
+                    <input type="text" id="direccion" th:field="*{direccion}" placeholder="Ej. Dg. 61c #26-36" required />
+                </div>
+                <div class="form-group">
+                    <label for="capacidad">Capacidad Aforo</label>
+                    <input type="number" id="capacidad" th:field="*{capacidad}" min="1" placeholder="Ej. 14000" required />
+                </div>
+            </div>
+            <button type="submit">Guardar Lugar</button>
+        </form>
+    </div>
+
+    <!-- Listado de Lugares con columna Ciudad -->
+    <div class="card">
+        <h2>Catálogo de Lugares</h2>
+        <div th:if="${#lists.isEmpty(venues)}" class="empty-alert">
+            Actualmente no hay lugares registrados
+        </div>
+        <table th:unless="${#lists.isEmpty(venues)}">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Ciudad</th>
+                <th>Dirección</th>
+                <th>Capacidad</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="item : ${venues}">
+                <td th:text="${item.id}">1</td>
+                <td th:text="${item.nombre}" style="font-weight: 600;">Nombre</td>
+                <td th:text="${item.ciudad}">Ciudad</td>
+                <td th:text="${item.direccion}">Dirección</td>
+                <td th:text="${item.capacidad}">500</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+</body>
+</html>
