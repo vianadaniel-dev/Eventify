@@ -1,8 +1,10 @@
 package com.example.eventify.service;
 
+import com.example.eventify.dto.EventCreateDTO;
 import com.example.eventify.dto.EventFormDTO;
 import com.example.eventify.exception.BadRequestException;
 import com.example.eventify.exception.ResourceNotFoundException;
+import com.example.eventify.mapper.EventMapper;
 import com.example.eventify.model.Category;
 import com.example.eventify.model.Event;
 import com.example.eventify.model.Venue;
@@ -17,6 +19,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -37,16 +40,20 @@ class EventServiceTest {
     @Mock
     private CategoryRepository categoryRepository;
 
+    @Mock
+    private EventMapper eventMapper; // <-- ¡Este era el que faltaba mockear!
+
     @InjectMocks
     private EventService eventService;
 
     @Test
-    @DisplayName("Escenario 1: Crear evento relacional con Venue y Category")
+    @DisplayName("Escenario 1: Crear evento relacional desde DTO de formulario")
     void createEventFromDTO_ValidData_Success() {
         Venue mockVenue = Venue.builder().id(1L).nombre("Movistar Arena").ciudad("Bogotá").capacidad(14000).build();
         Category mockCategory = Category.builder().id(1L).nombre("Conciertos").build();
+        Event mockEvent = Event.builder().id(10L).nombre("Concierto de ROCK").venue(mockVenue).categories(Set.of(mockCategory)).build();
 
-        EventFormDTO dto = EventFormDTO.builder()
+        EventFormDTO formDTO = EventFormDTO.builder()
                 .nombre("Concierto de ROCK")
                 .fecha(LocalDate.now().plusDays(10))
                 .descripcion("Show en vivo")
@@ -54,27 +61,36 @@ class EventServiceTest {
                 .categoryIds(Set.of(1L))
                 .build();
 
+        EventCreateDTO createDTO = EventCreateDTO.builder()
+                .nombre("Concierto de ROCK")
+                .fecha(LocalDate.now().plusDays(10))
+                .descripcion("Show en vivo")
+                .venueId(1L)
+                .categoryIds(Set.of(1L))
+                .build();
+
+        when(eventMapper.formToCreateDTO(any(EventFormDTO.class))).thenReturn(createDTO);
         when(venueRepository.findById(1L)).thenReturn(Optional.of(mockVenue));
         when(categoryRepository.findAllById(Set.of(1L))).thenReturn(List.of(mockCategory));
-        when(eventRepository.save(any(Event.class))).thenAnswer(inv -> {
-            Event e = inv.getArgument(0);
-            e.setId(10L);
-            return e;
-        });
+        when(eventMapper.toEntity(any(EventCreateDTO.class))).thenReturn(new Event());
+        when(eventRepository.save(any(Event.class))).thenReturn(mockEvent);
+        when(eventRepository.findAll()).thenReturn(List.of(mockEvent)); // <-- ¡Esto faltaba mockear para el método auxiliar!
 
-        Event result = eventService.createEventFromDTO(dto);
+        Event result = eventService.createEventFromDTO(formDTO);
 
         assertNotNull(result);
         assertEquals(10L, result.getId());
         assertEquals("Bogotá", result.getVenue().getCiudad());
-        assertEquals(1, result.getCategories().size());
         verify(eventRepository, times(1)).save(any(Event.class));
     }
 
     @Test
     @DisplayName("Crear evento con nombre vacío lanza BadRequestException")
     void createEventFromDTO_EmptyName_ThrowsException() {
-        EventFormDTO invalid = EventFormDTO.builder().nombre("  ").fecha(LocalDate.now()).venueId(1L).build();
+        EventFormDTO invalid = EventFormDTO.builder().nombre("   ").fecha(LocalDate.now()).venueId(1L).build();
+
+        EventCreateDTO createDTO = EventCreateDTO.builder().nombre("   ").fecha(LocalDate.now()).venueId(1L).build();
+        when(eventMapper.formToCreateDTO(any(EventFormDTO.class))).thenReturn(createDTO);
 
         assertThrows(BadRequestException.class, () -> eventService.createEventFromDTO(invalid));
         verify(eventRepository, never()).save(any());

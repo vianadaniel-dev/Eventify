@@ -2,93 +2,38 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.3.4</version>
+        <version>3.4.3</version>
         <relativePath/>
     </parent>
-
     <groupId>com.example</groupId>
-    <artifactId>Eventify</artifactId>
+    <artifactId>eventify</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>Eventify</name>
-    <description>Plataforma Eventify</description>
-
+    <description>Event Management REST API</description>
     <properties>
         <java.version>21</java.version>
-        <lombok.version>1.18.34</lombok.version>
+        <org.mapstruct.version>1.6.3</org.mapstruct.version>
     </properties>
-
     <dependencies>
-        <!-- 1. Web MVC -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-
-        <!-- 2. Spring Data JPA e Hibernate -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
-
-        <!-- 3. Driver PostgreSQL -->
-        <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-
-        <!-- 4. Bean Validation -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
-
-        <!-- 5. Actuator -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-actuator</artifactId>
+            <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
-
-        <!-- 6. Lombok -->
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>${lombok.version}</version>
-            <optional>true</optional>
-        </dependency>
-
-        <!-- 7. Swagger / OpenAPI -->
-        <dependency>
-            <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>2.5.0</version>
-        </dependency>
-
-        <!-- 8. Testing (JUnit 5 + Mockito) -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <!-- 9. Base de datos H2 en memoria para @DataJpaTest sin dependencias externas -->
-        <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <!-- 10. Motor de Plantillas Thymeleaf -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-thymeleaf</artifactId>
         </dependency>
-
-        <!-- Flyway Core y soporte para PostgreSQL -->
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>
@@ -96,28 +41,66 @@
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-database-postgresql</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>2.8.5</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct</artifactId>
+            <version>${org.mapstruct.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
             <scope>runtime</scope>
         </dependency>
-
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
         <plugins>
-            <!-- Plugin de compilación con procesador de Lombok -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.projectlombok</groupId>
                             <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok-mapstruct-binding</artifactId>
+                            <version>0.2.0</version>
+                        </path>
+                        <path>
+                            <groupId>org.mapstruct</groupId>
+                            <artifactId>mapstruct-processor</artifactId>
+                            <version>${org.mapstruct.version}</version>
                         </path>
                     </annotationProcessorPaths>
                 </configuration>
             </plugin>
-
-            <!-- Plugin de Spring Boot -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>

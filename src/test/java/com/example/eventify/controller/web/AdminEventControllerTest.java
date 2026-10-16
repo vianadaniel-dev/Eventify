@@ -1,6 +1,7 @@
 package com.example.eventify.controller.web;
 
-import com.example.eventify.dto.EventFormDTO;
+import com.example.eventify.dto.EventCreateDTO;
+import com.example.eventify.dto.EventResponseDTO;
 import com.example.eventify.model.Event;
 import com.example.eventify.model.Venue;
 import com.example.eventify.service.EventService;
@@ -38,7 +39,7 @@ class AdminEventControllerTest {
     private VenueService venueService;
 
     @Test
-    @DisplayName("Escenario 3 y 4: Carga el panel manteniendo filtros y Slice en el Model")
+    @DisplayName("Escenario 3: Carga el panel manteniendo filtros y Slice en el Model")
     void showEventsPanel_ReturnsViewAndModelWithSlice() throws Exception {
         Venue venue = Venue.builder().id(1L).nombre("Movistar Arena").ciudad("Bogotá").capacidad(14000).build();
         Event event = Event.builder().id(1L).nombre("Concierto de ROCK").fecha(LocalDate.now()).venue(venue).build();
@@ -62,7 +63,7 @@ class AdminEventControllerTest {
     @Test
     @DisplayName("Guardar evento relacional aplica redirección Post-Redirect-Get")
     void saveEvent_RedirectsSuccessfully() throws Exception {
-        when(eventService.createEventFromDTO(any(EventFormDTO.class))).thenReturn(new Event());
+        when(eventService.createEventFromDTO(any())).thenReturn(new Event());
 
         mockMvc.perform(post("/admin/events")
                         .param("nombre", "Conferencia Cloud")
@@ -72,6 +73,6 @@ class AdminEventControllerTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/admin/events"));
 
-        verify(eventService, times(1)).createEventFromDTO(any(EventFormDTO.class));
+        verify(eventService, times(1)).createEventFromDTO(any());
     }
 }

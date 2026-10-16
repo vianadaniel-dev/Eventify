@@ -1,8 +1,12 @@
 package com.example.eventify.service;
 
+import com.example.eventify.dto.VenueCreateDTO;
+import com.example.eventify.dto.VenueResponseDTO;
 import com.example.eventify.exception.BadRequestException;
 import com.example.eventify.exception.ResourceNotFoundException;
+import com.example.eventify.mapper.VenueMapper;
 import com.example.eventify.model.Venue;
+import com.example.eventify.repository.EventRepository;
 import com.example.eventify.repository.VenueRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,28 +32,70 @@ class VenueServiceTest {
     @Mock
     private VenueRepository venueRepository;
 
+    @Mock
+    private EventRepository eventRepository;
+
+    @Mock
+    private VenueMapper venueMapper;
+
     @InjectMocks
     private VenueService venueService;
 
     @Test
-    @DisplayName("Crear lugar con datos válidos")
+    @DisplayName("Crear lugar con DTO válido exitoso")
     void createVenue_ValidData_Success() {
-        Venue input = Venue.builder().nombre("Teatro").direccion("Calle 10").capacidad(500).build();
-        Venue saved = Venue.builder().id(1L).nombre("Teatro").direccion("Calle 10").capacidad(500).build();
+        VenueCreateDTO inputDto = VenueCreateDTO.builder()
+                .nombre("Teatro")
+                .ciudad("Bogotá")
+                .direccion("Calle 10")
+                .capacidad(500)
+                .build();
 
-        when(venueRepository.save(any(Venue.class))).thenReturn(saved);
+        Venue venueEntity = Venue.builder()
+                .nombre("Teatro")
+                .ciudad("Bogotá")
+                .direccion("Calle 10")
+                .capacidad(500)
+                .build();
 
-        Venue result = venueService.createVenue(input);
+        Venue savedEntity = Venue.builder()
+                .id(1L)
+                .nombre("Teatro")
+                .ciudad("Bogotá")
+                .direccion("Calle 10")
+                .capacidad(500)
+                .build();
+
+        VenueResponseDTO responseDTO = VenueResponseDTO.builder()
+                .id(1L)
+                .nombre("Teatro")
+                .ciudad("Bogotá")
+                .direccion("Calle 10")
+                .capacidad(500)
+                .build();
+
+        when(venueRepository.existsByNombreIgnoreCase(anyString())).thenReturn(false);
+        when(venueMapper.toEntity(inputDto)).thenReturn(venueEntity);
+        when(venueRepository.save(any(Venue.class))).thenReturn(savedEntity);
+        when(venueMapper.toResponseDTO(savedEntity)).thenReturn(responseDTO);
+
+        VenueResponseDTO result = venueService.createVenue(inputDto);
 
         assertNotNull(result);
         assertEquals(1L, result.getId());
-        verify(venueRepository, times(1)).save(input);
+        assertEquals("Teatro", result.getNombre());
+        verify(venueRepository, times(1)).save(any(Venue.class));
     }
 
     @Test
     @DisplayName("Crear lugar con capacidad menor o igual a cero lanza BadRequestException")
     void createVenue_InvalidCapacity_ThrowsException() {
-        Venue invalid = Venue.builder().nombre("Teatro").direccion("Calle 10").capacidad(0).build();
+        VenueCreateDTO invalid = VenueCreateDTO.builder()
+                .nombre("Teatro")
+                .ciudad("Bogotá")
+                .direccion("Calle 10")
+                .capacidad(0)
+                .build();
 
         assertThrows(BadRequestException.class, () -> venueService.createVenue(invalid));
         verify(venueRepository, never()).save(any());
@@ -65,14 +111,14 @@ class VenueServiceTest {
     }
 
     @Test
-    @DisplayName("Listar lugares con paginación")
+    @DisplayName("Listar lugares con paginación DTO")
     void getAllVenues_Paged_Success() {
         Pageable pageable = PageRequest.of(0, 10);
         Page<Venue> emptyPage = new PageImpl<>(Collections.emptyList(), pageable, 0);
 
         when(venueRepository.findAll(pageable)).thenReturn(emptyPage);
 
-        Page<Venue> result = venueService.getAllVenues(pageable);
+        Page<VenueResponseDTO> result = venueService.getAllVenuesDTOPage(pageable);
 
         assertNotNull(result);
         assertEquals(0, result.getTotalElements());

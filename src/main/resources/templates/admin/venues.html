@@ -16,8 +16,13 @@
         .form-group { display: flex; flex-direction: column; margin-bottom: 1rem; }
         label { font-weight: 600; font-size: 0.85rem; margin-bottom: 0.35rem; color: #475569; }
         input { padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; }
+        .campo-invalido { border-color: #dc2626 !important; background-color: #fef2f2; }
+        .error-msg { color: #dc2626; font-size: 0.75rem; margin-top: 0.25rem; font-weight: 500; }
+        .alert-success { background: #dcfce7; color: #166534; padding: 0.75rem 1rem; border-radius: 6px; margin-bottom: 1rem; font-weight: 500; }
+        .alert-danger { background: #fee2e2; color: #991b1b; padding: 0.75rem 1rem; border-radius: 6px; margin-bottom: 1rem; font-weight: 500; }
         button { background-color: #2563eb; color: white; border: none; padding: 0.6rem 1.25rem; border-radius: 6px; font-weight: 600; cursor: pointer; }
         button:hover { background-color: #1d4ed8; }
+        .btn-danger { background: #dc2626; padding: 0.35rem 0.75rem; font-size: 0.8rem; }
         table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
         th, td { text-align: left; padding: 0.75rem; border-bottom: 1px solid #e2e8f0; font-size: 0.9rem; }
         th { background-color: #f1f5f9; color: #475569; font-size: 0.75rem; text-transform: uppercase; }
@@ -36,33 +41,40 @@
 </nav>
 
 <div class="container">
-    <!-- Formulario de Registro con Ciudad -->
+
+    <!-- Mensajes Flash -->
+    <div th:if="${successMessage}" class="alert-success" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="alert-danger" th:text="${errorMessage}"></div>
+
     <div class="card">
         <h2>Registrar Nuevo Lugar / Recinto</h2>
         <form th:action="@{/admin/venues}" th:object="${venue}" method="post">
             <div class="form-grid">
                 <div class="form-group">
                     <label for="nombre">Nombre del Lugar</label>
-                    <input type="text" id="nombre" th:field="*{nombre}" placeholder="Ej. Movistar Arena" required />
+                    <input type="text" id="nombre" th:field="*{nombre}" th:errorclass="campo-invalido" placeholder="Ej. Movistar Arena" />
+                    <span class="error-msg" th:errors="*{nombre}">Error nombre</span>
                 </div>
                 <div class="form-group">
                     <label for="ciudad">Ciudad</label>
-                    <input type="text" id="ciudad" th:field="*{ciudad}" placeholder="Ej. Bogotá" required />
+                    <input type="text" id="ciudad" th:field="*{ciudad}" th:errorclass="campo-invalido" placeholder="Ej. Bogotá" />
+                    <span class="error-msg" th:errors="*{ciudad}">Error ciudad</span>
                 </div>
                 <div class="form-group">
                     <label for="direccion">Dirección</label>
-                    <input type="text" id="direccion" th:field="*{direccion}" placeholder="Ej. Dg. 61c #26-36" required />
+                    <input type="text" id="direccion" th:field="*{direccion}" th:errorclass="campo-invalido" placeholder="Ej. Dg. 61c #26-36" />
+                    <span class="error-msg" th:errors="*{direccion}">Error dirección</span>
                 </div>
                 <div class="form-group">
                     <label for="capacidad">Capacidad Aforo</label>
-                    <input type="number" id="capacidad" th:field="*{capacidad}" min="1" placeholder="Ej. 14000" required />
+                    <input type="number" id="capacidad" th:field="*{capacidad}" th:errorclass="campo-invalido" min="1" placeholder="Ej. 14000" />
+                    <span class="error-msg" th:errors="*{capacidad}">Error capacidad</span>
                 </div>
             </div>
             <button type="submit">Guardar Lugar</button>
         </form>
     </div>
 
-    <!-- Listado de Lugares con columna Ciudad -->
     <div class="card">
         <h2>Catálogo de Lugares</h2>
         <div th:if="${#lists.isEmpty(venues)}" class="empty-alert">
@@ -76,6 +88,7 @@
                 <th>Ciudad</th>
                 <th>Dirección</th>
                 <th>Capacidad</th>
+                <th>Acción</th>
             </tr>
             </thead>
             <tbody>
@@ -85,6 +98,11 @@
                 <td th:text="${item.ciudad}">Ciudad</td>
                 <td th:text="${item.direccion}">Dirección</td>
                 <td th:text="${item.capacidad}">500</td>
+                <td>
+                    <form th:action="@{/admin/venues/{id}/delete(id=${item.id})}" method="post" style="display:inline;">
+                        <button type="submit" class="btn-danger">Eliminar</button>
+                    </form>
+                </td>
             </tr>
             </tbody>
         </table>

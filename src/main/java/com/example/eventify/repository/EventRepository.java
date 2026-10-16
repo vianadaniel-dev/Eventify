@@ -73,4 +73,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 
     @EntityGraph(attributePaths = {"venue", "categories"})
     Slice<Event> findByFechaBetweenOrderByFechaDesc(LocalDate fechaInicio, LocalDate fechaFin, Pageable pageable);
+
+    // 5. Verificar si existen eventos activos asociados a un Venue (protección de integridad al eliminar - M6.1S5)
+    boolean existsByVenueId(Long venueId);
 }

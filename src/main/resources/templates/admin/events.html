@@ -15,6 +15,10 @@
         .form-group { display: flex; flex-direction: column; margin-bottom: 1rem; }
         label { font-weight: 600; font-size: 0.85rem; margin-bottom: 0.35rem; color: #475569; }
         input, select, textarea { padding: 0.55rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; }
+        .campo-invalido { border-color: #dc2626 !important; background-color: #fef2f2; }
+        .error-msg { color: #dc2626; font-size: 0.75rem; margin-top: 0.25rem; font-weight: 500; }
+        .alert-success { background: #dcfce7; color: #166534; padding: 0.75rem 1rem; border-radius: 6px; margin-bottom: 1rem; font-weight: 500; }
+        .alert-danger { background: #fee2e2; color: #991b1b; padding: 0.75rem 1rem; border-radius: 6px; margin-bottom: 1rem; font-weight: 500; }
         .checkbox-group { display: flex; flex-wrap: wrap; gap: 0.75rem; padding: 0.5rem 0; }
         .checkbox-item { background: #f1f5f9; padding: 0.35rem 0.75rem; border-radius: 6px; font-size: 0.85rem; display: flex; align-items: center; gap: 0.4rem; }
         .btn { background: #2563eb; color: white; border: none; padding: 0.6rem 1.25rem; border-radius: 6px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-block; }
@@ -42,28 +46,35 @@
 
 <div class="container">
 
-    <!-- 1. Formulario Relacional de Creación (TASK 4.3) -->
+    <!-- Mensajes Flash de Éxito / Error -->
+    <div th:if="${successMessage}" class="alert-success" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="alert-danger" th:text="${errorMessage}"></div>
+
+    <!-- 1. Formulario Relacional de Creación con Validación Inline (Task 4.1) -->
     <div class="card">
         <h2>Registrar Nuevo Evento</h2>
         <form th:action="@{/admin/events}" th:object="${eventForm}" method="post">
             <div class="grid-3">
                 <div class="form-group">
                     <label>Nombre del Evento</label>
-                    <input type="text" th:field="*{nombre}" placeholder="Ej. Concierto de ROCK" required />
+                    <input type="text" th:field="*{nombre}" th:errorclass="campo-invalido" placeholder="Ej. Concierto de ROCK" />
+                    <span class="error-msg" th:errors="*{nombre}">Error nombre</span>
                 </div>
                 <div class="form-group">
                     <label>Fecha</label>
-                    <input type="date" th:field="*{fecha}" required />
+                    <input type="date" th:field="*{fecha}" th:errorclass="campo-invalido" />
+                    <span class="error-msg" th:errors="*{fecha}">Error fecha</span>
                 </div>
                 <div class="form-group">
                     <label>Sede Física (Venue)</label>
-                    <select th:field="*{venueId}" required>
+                    <select th:field="*{venueId}" th:errorclass="campo-invalido">
                         <option value="">-- Seleccione un Lugar --</option>
                         <option th:each="v : ${venues}"
                                 th:value="${v.id}"
                                 th:text="${v.nombre + ' (' + v.ciudad + ' - Cap: ' + v.capacidad + ')'}">
                         </option>
                     </select>
+                    <span class="error-msg" th:errors="*{venueId}">Error venue</span>
                 </div>
             </div>
 
@@ -75,18 +86,20 @@
                         <span th:text="${cat.nombre}">Categoría</span>
                     </label>
                 </div>
+                <span class="error-msg" th:errors="*{categoryIds}">Error categorías</span>
             </div>
 
             <div class="form-group">
                 <label>Descripción</label>
-                <textarea th:field="*{descripcion}" rows="2" placeholder="Detalles del evento..."></textarea>
+                <textarea th:field="*{descripcion}" th:errorclass="campo-invalido" rows="2" placeholder="Detalles del evento..."></textarea>
+                <span class="error-msg" th:errors="*{descripcion}">Error descripción</span>
             </div>
 
             <button type="submit" class="btn">Guardar Evento</button>
         </form>
     </div>
 
-    <!-- 2. Barra de Búsqueda Filtrada (Escenarios 3 y 6) -->
+    <!-- 2. Barra de Búsqueda Filtrada -->
     <div class="card">
         <h2>Filtrar Catálogo</h2>
         <form th:action="@{/admin/events}" method="get" class="grid-3" style="align-items: end;">
@@ -105,7 +118,7 @@
         </form>
     </div>
 
-    <!-- 3. Tabla de Eventos Optimizada y Paginación con Slice (TASK 4.4) -->
+    <!-- 3. Tabla de Eventos Activos -->
     <div class="card">
         <h2>Catálogo de Eventos Activos (Ordenados por Fecha DESC)</h2>
 
@@ -144,16 +157,13 @@
             </tbody>
         </table>
 
-        <!-- Controles Anterior / Siguiente basados en Slice manteniendo filtros en URL -->
         <div class="pagination" th:if="${eventsSlice != null}">
             <a class="btn"
                th:classappend="${!eventsSlice.hasPrevious()} ? 'disabled'"
                th:href="@{/admin/events(page=${currentPage - 1}, size=${pageSize}, ciudad=${ciudad}, categoria=${categoria})}">
                 &laquo; Anterior
             </a>
-
             <span>Página <strong th:text="${currentPage + 1}">1</strong></span>
-
             <a class="btn"
                th:classappend="${!eventsSlice.hasNext()} ? 'disabled'"
                th:href="@{/admin/events(page=${currentPage + 1}, size=${pageSize}, ciudad=${ciudad}, categoria=${categoria})}">
