@@ -1,19 +1,20 @@
 package com.example.eventify.controller.web;
 
-import com.example.eventify.dto.EventCreateDTO;
-import com.example.eventify.dto.EventResponseDTO;
 import com.example.eventify.model.Event;
 import com.example.eventify.model.Venue;
+import com.example.eventify.security.JwtService;
 import com.example.eventify.service.EventService;
 import com.example.eventify.service.VenueService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
@@ -27,6 +28,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(AdminEventController.class)
+@AutoConfigureMockMvc(addFilters = false)
 class AdminEventControllerTest {
 
     @Autowired
@@ -37,6 +39,12 @@ class AdminEventControllerTest {
 
     @MockBean
     private VenueService venueService;
+
+    @MockBean
+    private JwtService jwtService;
+
+    @MockBean
+    private UserDetailsService userDetailsService;
 
     @Test
     @DisplayName("Escenario 3: Carga el panel manteniendo filtros y Slice en el Model")

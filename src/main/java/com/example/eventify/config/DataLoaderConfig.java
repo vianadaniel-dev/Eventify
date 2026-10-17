@@ -1,13 +1,18 @@
 package com.example.eventify.config;
 
 import com.example.eventify.model.Event;
+import com.example.eventify.model.Role;
+import com.example.eventify.model.User;
 import com.example.eventify.model.Venue;
 import com.example.eventify.repository.EventRepository;
+import com.example.eventify.repository.UserRepository;
 import com.example.eventify.repository.VenueRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
 import java.time.LocalDate;
 
 @Configuration
@@ -31,6 +36,21 @@ public class DataLoaderConfig {
                         .descripcion("Encuentro de innovación y desarrollo")
                         .activo(true)
                         .venue(venue)
+                        .build());
+            }
+        };
+    }
+
+    // Crea un usuario admin por defecto en la tabla 'users' si aún no existe
+    @Bean
+    public CommandLineRunner initAdminUser(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+        return args -> {
+            if (!userRepository.existsByUsername("admin")) {
+                userRepository.save(User.builder()
+                        .username("admin")
+                        .email("admin@eventify.com")
+                        .password(passwordEncoder.encode("admin123"))
+                        .role(Role.ROLE_ADMIN)
                         .build());
             }
         };
